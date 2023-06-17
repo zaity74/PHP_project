@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../public/index.php';
 
 // Initialisation de certaines choses
 use App\Controller\ContactController;
@@ -8,30 +9,40 @@ use App\Routing\RouteNotFoundException;
 use App\Routing\Router;
 use Symfony\Component\Dotenv\Dotenv;
 use Twig\Environment;
-use Twig\Loader\FilesystemLoader;
+use Twig\Loader\FilesystemLoader; 
+
+use Doctrine\ORM\EntityManager; 
+use Doctrine\ORM\ORMSetup;
+use Doctrine\DBAL\DriverManager;
+
+use Doctrine\ORM\Tools\Console\ConsoleRunner;
+use Doctrine\ORM\Tools\Console\EntityManagerProvider\SingleManagerProvider;
 
 $dotenv = new Dotenv();
 $dotenv->loadEnv(__DIR__ . '/../.env');
 
-// DB
-[
-  'DB_HOST'     => $host,
-  'DB_PORT'     => $port,
-  'DB_NAME'     => $dbname,
-  'DB_CHARSET'  => $charset,
-  'DB_USER'     => $user,
-  'DB_PASSWORD' => $password
-] = $_ENV;
+// Mode développement 
+$isDevMode = $_ENV['APP_ENV'] === 'dev';
 
-$dsn = "mysql:dbname=$dbname;host=$host:$port;charset=$charset";
+// DB CONNECTIONS
+$dbParams = [
+  'driver'   => 'pdo_mysql',
+  'host'     => $_ENV['DB_HOST'],
+  'port'     => $_ENV['DB_PORT'],
+  'user'     => $_ENV['DB_USER'],
+  'password' => $_ENV['DB_PASSWORD'],
+  'dbname'   => $_ENV['DB_NAME'],
+];
 
-try {
-  $pdo = new PDO($dsn, $user, $password);
-  var_dump($pdo);
-} catch (PDOException $ex) {
-  echo "Erreur lors de la connexion à la base de données : " . $ex->getMessage();
-  exit;
-}
+$dsn = "mysql:dbname={$dbParams['dbname']};host={$dbParams['host']}:{$dbParams['port']};charset=utf8";
+
+// ENTITY 
+$paths = [__DIR__ . '/../src/Entity']; 
+
+// ENTITY MANAGER 
+$config = ORMSetup::createAttributeMetadataConfiguration($paths, $isDevMode);
+$connection = DriverManager::getConnection($dbParams, $config);
+$entityManager = new EntityManager($connection, $config);
 
 // Twig
 $loader = new FilesystemLoader(__DIR__ . '/../templates/');
@@ -58,7 +69,9 @@ $router->addRoute(
 );
 
 try {
-  $router->execute($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
+  $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+  $httpMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+  $router->execute($requestUri, $httpMethod);
 } catch (RouteNotFoundException $ex) {
   http_response_code(404);
   echo "Page not found";
