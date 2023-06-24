@@ -1,5 +1,7 @@
-var/
-vendor/
+project/var/
+project/vendor/
 conf/*.ini
 .vscode/
-.env.local
+.idea
+project/.env.local
+docker/etc/mysql/data/

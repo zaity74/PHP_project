@@ -1,26 +1,42 @@
 # Sciences-U - B3 IW - PHP MVC - 2023
 
-## Démarrage
+### Requirements
+---
 
-### Composer
+- Apache 2.4
+- PHP 8.1
+- MySQL 5.7
+- Composer 2
 
-Pour récupérer les dépendances déclarées dans `composer.json` et générer l'autoloader PSR-4, exécuter la commande suivante :
+### Usage
+---
 
-```bash
-composer install
+### Installation
+---
+
 ```
+docker-compose up -d
+```
+
+### Configuration database
+---
+
+```
+# Créer la base de donnée si cette base n'hesite pas encore 
+# -f signifie --force pour force l'excecution 
+- bin/console doctrine:database:create -f
+
+# met a jour les entites en base de donnée
+- bin/console doctrine:schema:update -f
+
+```
+
+### Documentation
+---
 
 ### DB Configuration
 
 La configuration de la base de données doit être inscrite dans un fichier `.env.local`, sur le modèle du fichier `.env`.
-
-### Démarrer l'application
-
-Commande :
-
-```bash
-composer start
-```
 
 ## Cours
 
