@@ -2,12 +2,19 @@
 
 namespace App\Routing;
 
-use Twig\Environment;
+use App\Routing\Attribute\Route;
+use App\Utils\Filesystem;
+use Psr\Container\ContainerInterface;
+use ReflectionClass;
+use ReflectionException;
+use ReflectionMethod;
 
 class Router
 {
+  private const CONTROLLERS_GLOB_PATH = __DIR__ . "/../Controller/*Controller.php";
+
   public function __construct(
-    private Environment $twig
+    private ContainerInterface $container
   ) {
   }
 
@@ -30,15 +37,22 @@ class Router
   }
 
   public function getRoute(string $uri, string $httpMethod): ?array
-  {
+{
     foreach ($this->routes as $route) {
-      if ($route['url'] === $uri && $route['http_method'] === $httpMethod) {
-        return $route;
-      }
+        $pattern = $this->convertRouteToRegex($route['url']);
+        if (preg_match($pattern, $uri) && $route['http_method'] === $httpMethod) {
+            return $route;
+        }
     }
-
     return null;
-  }
+}
+
+private function convertRouteToRegex(string $route): string
+{
+    $pattern = preg_replace('/\//', '\/', $route);
+    $pattern = preg_replace('/{(\w+)}/', '(?P<$1>[^\/]+)', $pattern);
+    return '/^' . $pattern . '$/';
+}
 
   /**
    * @param string $requestUri
@@ -54,10 +68,91 @@ class Router
       throw new RouteNotFoundException($requestUri, $httpMethod);
     }
 
-    $controller = $route['controller'];
+    $controllerClass = $route['controller'];
     $method = $route['method'];
 
-    $controllerInstance = new $controller($this->twig);
-    echo $controllerInstance->$method();
+    $constructorParams = $this->getMethodParams($controllerClass . '::__construct');
+    $controllerInstance = new $controllerClass(...$constructorParams);
+
+    $controllerParams = $this->getMethodParams($controllerClass . '::' . $method);
+
+    $pattern = $this->convertRouteToRegex($route['url']); // Déclaration de la variable $pattern
+
+    preg_match($pattern, $requestUri, $matches);
+    foreach ($controllerParams as $index => $param) {
+      $paramName = $param->getName();
+      if (isset($matches[$paramName])) {
+        $controllerParams[$index] = $matches[$paramName];
+      }
+}
+
+    echo $controllerInstance->$method(...$controllerParams);
+  }
+
+  /**
+   * Get an array containing services instances guessed from method signature
+   *
+   * @param string $method Format : FQCN::method
+   * @return array The services to inject
+   */
+  private function getMethodParams(string $method): array
+  {
+    $params = [];
+
+    try {
+      $methodInfos = new ReflectionMethod($method);
+    } catch (ReflectionException $e) {
+      return [];
+    }
+    $methodParams = $methodInfos->getParameters();
+
+    foreach ($methodParams as $methodParam) {
+      $paramType = $methodParam->getType();
+      $paramTypeName = $paramType->getName();
+      $params[] = $this->container->get($paramTypeName);
+    }
+
+    return $params;
+  }
+
+  public function registerRoutes(): void
+  {
+    // Explorer le dossier des classes de contrôleurs
+    // Pour chacun d'eux, enregistrer les méthodes
+    // donc les contrôleurs portant un attribut Route
+    $classNames = Filesystem::getClassNames(self::CONTROLLERS_GLOB_PATH);
+
+    foreach ($classNames as $class) {
+      $fqcn = "App\\Controller\\" . $class;
+      $classInfos = new ReflectionClass($fqcn);
+
+      if ($classInfos->isAbstract()) {
+        continue;
+      }
+
+      $methods = $classInfos->getMethods(ReflectionMethod::IS_PUBLIC);
+
+      foreach ($methods as $method) {
+        if ($method->isConstructor()) {
+          continue;
+        }
+
+        $attributes = $method->getAttributes(Route::class);
+
+        if (!empty($attributes)) {
+          $routeAttribute = $attributes[0];
+          /** @var Route */
+          $routeInstance = $routeAttribute->newInstance();
+          $this->addRoute(
+            $routeInstance->getName(),
+            $routeInstance->getPath(),
+            $routeInstance->getHttpMethod(),
+            $fqcn,
+            $method->getName()
+          );
+        }
+      }
+    }
+    
   }
 }

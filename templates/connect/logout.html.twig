@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Déconnexion{% endblock %}
+
+{% block header %}
+    {{ parent() }} {# Ceci inclut le contenu du bloc header du template parent #}
+{% endblock %}
+{% block body %}
+    <h2>Déconnexion</h2>
+    <a href="/login">Veuillez vous reconnectez</a>
+{% endblock %}

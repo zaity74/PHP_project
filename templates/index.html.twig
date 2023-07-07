@@ -1,1 +1,31 @@
-<h1>Hello Sciences-U</h1>
+{% extends 'base.html.twig' %}
+
+{% block title %}Index{% endblock %}
+{% block style %}
+    <style>
+        .banner{
+            background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ1dFcdduVzA3L98_tQU9CeyxuilCShJ8Pi9Q&usqp=CAU');
+            background-repeat: no-repeat;
+            background-position: center; 
+            background-size: cover;
+            height: 400px; 
+            width: 100%;
+        }
+        .title{
+            text-align: center; 
+            margin: auto;
+        }
+
+        .link{
+            text-align: center; 
+            margin: auto;
+        }
+
+    </style>
+{% endblock %}
+{% block body %}
+<div class="banner">    
+</div>
+<h1 class="title">Welcome to the movie website</h1>
+    <a class="link" href="/movies">Go to movies to see the movies available</a>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends 'base.html.twig' %}
+
+
+{% block title %}Afficher les films{% endblock %}
+
+{% block style %}
+<style>
+    .details_section{
+        width: 100%;
+        height: 100vh;
+    }
+    .details_section .container{
+        max-width: 80%; 
+        height: 100%;
+        display: flex; 
+        justify-content: center; 
+        align-items: center;
+        flex-direction: column;
+        padding-top: 1.4em;
+
+    }
+    .container .movie_details{
+        display: flex;
+        width: 100%;
+        justify-content: center;
+        column-gap: 20px;
+        height: 260px;
+    }
+
+
+    .container .movie_details img{
+        height: 60%
+    }
+    .container .movie_details .text{
+        width: 50%;
+        height: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="details_section">
+<div class="container">
+<div class="movie_details">
+    <img src="https://www.critikat.com/wp-content/uploads/fly-images/46637/arton5807-1450x800-c.jpg" alt="movie"/>
+    <div class="text">
+        <li> {{ movie.name }} </li>
+        <p>Moyenne du film : {{averageRating}}</p>
+        <p>Total review : {{totalReviews}}</p>
+    </div>
+</div>
+
+<hr />
+<h3>Commentaire</h3>
+{% if user is defined %}
+    <div>
+        <form method="POST" enctype="multipart/form-data">
+        Rating: <input type="number" name="rating" min="1" max="5" required> <br>
+
+        Commentaire: <textarea name="commentaire" required></textarea> <br>
+
+        <button type="submit">Enregistrer</button>
+        </form>
+    </div>
+{% else %}
+    <p>Connectez vous pour écrire une review, <a href="/login">Login</a> ou <a href="/inscription">Créer un compte</a> </p>
+{% endif %}
+    
+<div>
+    {% for review in reviews %}
+        {% set author = authors[review.user_id] %}
+        {% if author %}
+        <div>
+            <p>{{ author.username }}</p>
+            <p>Note: {{ review.rating }}/5</p>
+            <p>{{ review.commentaire }}</p>
+            {% if user.id == review.user_id %}
+            <button onclick="deleteReview({{review.id}})">Supprimer</button>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+{% if user.isAdmin == true %}
+<p>Modifier un film</p>
+    <div>
+    <div>
+        <form id="updateMovieForm" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="_method" value="PUT">
+            Name: <input type="text" name="name"> <br>
+            Description: <textarea name="description"></textarea>  <br>
+            Slug: <input type="text" name="slug"> <br>
+            Image: <input type="file" name="image_film[]">  <br>
+            Genre:
+            <select name="genre_id">
+                {% for genre in genres %}
+                    <option value="{{ genre.id }}">{{ genre.name }}</option>
+                {% endfor %}
+            </select>
+            <br>
+            <button type="submit" onclick="updateMovie({{movie.ID}})">Enregistrer</button>
+        </form>
+    </div>
+</div>
+
+{% endif %}
+
+</div>
+</div>
+
+
+
+
+<script>
+
+    let visible = false;
+
+    function updateMovie(movieId) {
+    // Envoyer une requête de suppression à votre API
+    fetch(`/api/movies/${movieId}`, {
+        method: 'PUT'
+    })
+    .then(response => {
+        if (response.ok) {
+            // Recharger la page pour afficher la liste mise à jour
+            //location.reload();
+            console.log(response);
+        } else {
+            console.error('Une erreur s\'est produite lors de la suppression du film.');
+        }
+    })
+    .catch(error => {
+        console.error('Une erreur s\'est produite lors de la suppression du film.', error);
+    });
+    }
+
+    function deleteReview(reviewId) {
+    // Envoyer une requête de suppression à votre API
+    fetch(`/api/review/${reviewId}`, {
+        method: 'DELETE'
+    })
+    .then(response => {
+        if (response.ok) {
+            // Recharger la page pour afficher la liste mise à jour
+            //location.reload();
+            console.log(response);
+        } else {
+            console.error('Une erreur s\'est produite lors de la suppression du film.');
+        }
+    })
+    .catch(error => {
+        console.error('Une erreur s\'est produite lors de la suppression du film.', error);
+    });
+    }
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block header %}
+    {{ parent() }} {# Ceci inclut le contenu du bloc header du template parent #}
+
+    {# Votre contenu spécifique du header ici, en utilisant la variable $user #}
+    {% if user is defined %}
+        <p>Bonjour, {{ user.username }}</p>
+    {% else %}
+        <p>Connectez-vous pour accéder à votre compte</p>
+    {% endif %}
+{% endblock %}
+{% block body %}
+
+    <div>
+        <form method="POST" id="loginForm" enctype="multipart/form-data">
+            Username: <input type="text" name="username"> <br>
+            Email: <input type="email" name="email"> <br>
+            Password: <input type="password" name="password" aria-autocomplete="list"> <br>
+            <button type="submit">Se connecter</button>
+        </form>
+    </div>
+
+    <script>
+        
+    </script>
+{% endblock %}

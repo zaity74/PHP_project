@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+
+{% block title %}Afficher les films{% endblock %}
+
+{% block body %}
+
+<h2>S'inscrire</h2>
+<hr>
+<div>
+    <form method="POST" action='/inscription'  enctype="multipart/form-data">
+    Username: <input type="text" name="username"> <br>
+
+    Email: <input type="email" name="email"> <br>
+
+    Password: <input type="password" name="password"> <br>
+
+    <button type="submit">S'inscrire</button>
+
+    </form>
+</div>
+
+<script>
+
+
+</script>
+
+{% endblock %}

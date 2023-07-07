@@ -1,0 +1,69 @@
+{% extends 'base_admin.html.twig' %}
+
+
+{% block title %}Admin{% endblock %}
+
+{% block body %}
+
+<div>
+    <h1>Admin page </h2>
+
+    <h3>Les Films</h3>
+    <hr>
+    <p>Liste des films</p>
+    {% for movie in movies %}
+            <li>
+                <img src="{{movie.image}}" alt="movie" />
+                <a href="/movies/{{movie.slug}}">{{ movie.name }}</a>
+                <button onclick="deleteMovie('{{ movie.ID }}')">Supprimer</button>
+            </li>
+    {% endfor %}
+
+    <p>Ajouter un film</p>
+    <div>
+        <form method="POST" action='/admin'  enctype="multipart/form-data">
+        Name: <input type="text" name="name"> <br>
+
+        Description <textarea name="description"></textarea>  <br>
+
+        Slug: <input type="text" name="slug"> <br>
+
+        Image <input type="file" name="image_film[]">  <br>
+        Genre :<select name="genre_id">
+                {% for genre in genres %}
+                    <option value="{{ genre.id }}">{{ genre.name }}</option>
+                {% endfor %}
+            </select>
+        <br>
+
+        <button type="submit">Enregistrer</button>
+        </form>
+    </div>
+
+</div>
+
+<script>
+
+    function deleteMovie(movieID) {
+        // Envoyer une requête de suppression à votre API
+        fetch(`/api/movies/${movieID}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                // Recharger la page pour afficher la liste mise à jour
+                location.reload();
+                console.log(response);
+            } else {
+                console.error('Une erreur s\'est produite lors de la suppression du film.');
+            }
+        })
+        .catch(error => {
+            console.error('Une erreur s\'est produite lors de la suppression du film.', error);
+        });
+    }
+
+
+</script>
+
+{% endblock %}
